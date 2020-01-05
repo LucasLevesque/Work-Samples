@@ -1,0 +1,2711 @@
+//By Lucas Levesque and Jonathan Gonzales
+
+using namespace std;
+
+#include "stage2.h"
+
+int main(int argc, char **argv)
+{
+	sourceFile.open(argv[1]);
+	listingFile.open(argv[2]);
+	objectFile.open(argv[3]);
+	
+	try
+	{
+		//this program is the stage0 compiler for Pascallite. It will accept
+		//input from argv[1], generating a listing to argv[2], and object code to
+		//argv[3]
+		CreateListingHeader();
+		Parser();
+		CreateListingTrailer(0);
+		// Prints the symbol table into the object file
+		PrintSymbolTable();
+	} 
+	catch (int e)
+	{
+		listingFile << "\n";
+		switch(e)
+		{
+			case 1:
+				listingFile << "Error: Line " << lineNum << ": keyword \"program\" expected";
+				break;
+			case 2:
+				listingFile << "Error: Line " << lineNum << ": keyword \"begin\" expected";  //Accidentally declared this error twice, case 10
+				break;
+			case 3:
+				listingFile << "Error: Line " << lineNum << ": no text may follow \"end\"";
+				break;
+			case 4:
+				listingFile << "Error: Line " << lineNum << ": program name expected";
+				break;
+			case 5:
+				listingFile << "Error: Line " << lineNum << ": \";\" expected";
+				break;
+			case 6:
+				listingFile << "Error: Line " << lineNum << ": keyword \"const\" expected";
+				break;
+			case 7:
+				listingFile << "Error: Line " << lineNum << ": non-keyword identifier must follow \"const\"";
+				break;
+			case 8:
+				listingFile << "Error: Line " << lineNum << ": keyword \"var\" expected";
+				break;
+			case 9:
+				listingFile << "Error: Line " << lineNum << ": non-keyword identifier must follow \"var\"";
+				break;
+			case 10:
+				listingFile << "Error: Line " << lineNum << ": keyword \"begin\" expected";  //Accidentally declared this error twice, case 2
+				break;
+			case 11:
+				listingFile << "Error: Line " << lineNum << ": non-keyword identifier, \"read\", \"write\", \"if\", \"while\", \"repeat\", \";\", or \"begin\" expected";
+				break;
+			case 12:
+				listingFile << "Error: Line " << lineNum << ": \".\" expected";
+				break;
+			case 13:
+				listingFile << "Error: Line " << lineNum << ": non-keyword identifier expected";
+				break;
+			case 14:
+				listingFile << "Error: Line " << lineNum << ": \"=\" expected";
+				break;
+			case 15:
+				listingFile << "Error: Line " << lineNum << ": token to right of \"=\" illegal";
+				break;
+			case 16:
+				listingFile << "Error: Line " << lineNum << ": integer expected after sign";
+				break;
+			case 17:
+				listingFile << "Error: Line " << lineNum << ": boolean expected after not";
+				break;
+			case 18:
+				listingFile << "Error: Line " << lineNum << ": non-keyword identifier, \"begin\", or \"var\" expected";
+				break;
+			case 19:
+				listingFile << "Error: Line " << lineNum << ": \":\" expected";
+				break;	
+			case 20:
+				listingFile << "Error: Line " << lineNum << ": illegal type follows \":\"";
+				break;	
+			case 21:
+				listingFile << "Error: Line " << lineNum << ": non-keyword identifier or \"begin\" expected";
+				break;
+			case 22:
+				listingFile << "Error: Line " << lineNum << ": multiple name definition";
+				break;
+			case 23:
+				listingFile << "Error: Line " << lineNum << ": illegal use of keyword";
+				break;
+			case 24:
+				listingFile << "Error: Line " << lineNum << ": reference to undefined constant";
+				break;
+			case 25:
+				listingFile << "Error: Line " << lineNum << ": unexpected end of file";
+				break;
+			case 26:
+				listingFile << "Error: Line " << lineNum << ": \"}\" cannot begin token";
+				break;
+			case 27:
+				listingFile << "Error: Line " << lineNum << ": token cannot contain more than 1 consecutive \"_\"";
+				break;
+			case 28:
+				listingFile << "Error: Line " << lineNum << ": \"_\" cannot end token";
+				break;
+			case 29:
+				listingFile << "Error: Line " << lineNum << ": illegal symbol";
+				break;
+			case 30:
+				listingFile << "Error: Line " << lineNum << ": symbol table has too many entries";
+				break;
+			case 31:
+				listingFile << "Error: Line " << lineNum << ": expected integer or boolean value after \"=\"";
+				break;
+			case 32:
+				listingFile << "Error: Line " << lineNum << ": \":=\" expected; found: " << token;
+				break;
+            case 33:
+				listingFile << "Error: Line " << lineNum << ": \"(\" expected; found: " << token;
+				break;
+            case 34:
+				listingFile << "Error: Line " << lineNum << ": \")\" expected; found: " << token;
+				break;
+            case 35:
+				listingFile << "Error: Line " << lineNum << ": \"not\" or \"true\" or \"false\" or \"(\" or \"+\" or \"-\" or integer or non-keyword identifier expected; found: " << token;
+				break;
+            case 36:
+				listingFile << "Error: Line " << lineNum << ": \"<>\" or \"=\" or \"<=\" or \">=\" or \"<\" or \">\" or \")\" or \";\" expected; found: " << token;
+				break;
+	    case 37:
+				listingFile << "Error: Line " << lineNum << ": \"<>\" or \"=\" or \"<=\" or \">=\" or \"<\" or \">\" or \")\" or \";\" or \"-\" or \"+\" or \"or\" expected; found: " << token;
+				break;
+            case 38:
+				listingFile << "Error: Line " << lineNum << ": \"(\" or \"integer\" or \"non-keyword identifier\" expected; found: " << token;
+				break;
+            case 39:
+				listingFile << "Error: Line " << lineNum << ": \"not\" or \"+\" or \"-\" or \"integer\" or \"true\" or \"false\" or \"non-keyword identifier\" or \"(\" expected; found: " << token;
+				break;
+            case 40:
+				listingFile << "Error: Line " << lineNum << ": \"<>\" or \"=\" or \"<=\" or \">=\" or \"<\" or \">\" expected; found: " << token;
+				break;
+            case 41:
+				listingFile << "Error: Line " << lineNum << ": \"+\" or \"-\" or \"or\" expected; found: " << token;
+				break;
+            case 42:
+				listingFile << "Error: Line " << lineNum << ": \"*\" or \"div\" or \"mod\" or \"and\" expected; found: " << token;
+				break;
+			case 43:
+				listingFile << "Error: Line " << lineNum << ": reference to undefined variable";
+				break;
+			case 44:
+				listingFile << "Error: Line " << lineNum << ": operator \"and\" requires boolean operands";
+				break;
+			case 45:
+				listingFile << "Error: Line " << lineNum << ": compiler error, currentTempNo should be >= –1";
+				break;
+			case 46:
+				listingFile << "Error: Line " << lineNum << ": Operator stack underflow";
+				break;
+			case 47:
+				listingFile << "Error: Line " << lineNum << ": Operand stack underflow";
+				break;
+			case 48:
+				listingFile << "Error: Line " << lineNum << ": incompatible data types (operand(s) must be INTEGERS)";
+				break;
+			case 49:
+				listingFile << "Error: Line " << lineNum << ": incompatible data types (operand(s) must be BOOLEAN)";
+				break;
+			case 50:
+				listingFile << "Error: Line " << lineNum << ": incompatible data types (operands not of the same data type)";
+				break;
+			case 51:
+				listingFile << "Error: Line " << lineNum << ": symbol on left-hand side of assignment must be of type VARIABLE";
+				break;
+			case 52:
+				listingFile << "Error: Line " << lineNum << ": reference to undefined variable or constant";
+				break;
+			case 53:
+				listingFile << "Error: Line " << lineNum << ": expected non-keyword identifier, \"read\", \"write\", \"while\", \"if\", \"repeat\", \";\" or \"begin\"; found: " << token;
+				break;
+			case 54:
+				listingFile << "Error: Line " << lineNum << ": operand must be of the type VARIABLE";
+				break;
+			case 55:
+				listingFile << "Error: Line " << lineNum << ":  \"(\" or \"boolean\" or \"non-keyword identifier\" expected; found: " << token;
+				break;
+			case 56:
+				listingFile << "Error: Line " << lineNum << "\"if\" expected";
+				break;
+			case 57:
+				listingFile << "Error: Line " << lineNum << "\"then\" expected";
+				break;
+			case 58:
+				listingFile << "Error: Line " << lineNum << "boolean value expected for if statement";
+				break;
+			case 59:
+				listingFile << "Error: Line " << lineNum << "\"while\" expected";
+				break;
+			case 60:
+				listingFile << "Error: Line " << lineNum << "\"do\" expected";
+				break;
+			case 61:
+				listingFile << "Error: Line " << lineNum << "boolean value expected for while statement";
+				break;
+			case 62:
+				listingFile << "Error: Line " << lineNum << "\"repeat\" expected";
+				break;
+			case 63:
+				listingFile << "Error: Line " << lineNum << "\"until\" expected";
+				break;
+			default:
+				listingFile << "Unknown error\n";
+				
+		}
+		CreateListingTrailer(1);
+	}
+	
+	sourceFile.close();
+	listingFile.close();
+	objectFile.close();
+	
+	return 0;
+}
+
+//-------Functions called from main()-----------------
+
+void CreateListingHeader()
+{
+	time_t now = time(nullptr);
+	listingFile << "STAGE2:  Jonathan Gonzales and Lucas Levesque, " << ctime(&now) << endl;
+	listingFile << setw(22) << left << "LINE NO." << "SOURCE STATEMENT\n\n";
+}
+
+void Parser()
+{
+	NextChar(); //charac must be initialized to the first character of the source file
+	if(NextToken() != "program")
+	{
+		throw(1); //keyword "program" expected 
+	}
+	//a call to NextToken() has two effects
+	// (1) the variable, token, is assigned the value of the next token
+	// (2) the next token is read from the source file in order to make
+	// the assignment. The value returned by NextToken() is also
+	// the next token.
+	Prog();
+	//parser implements the grammar rules, calling first rule
+}
+void CreateListingTrailer(int e)
+{
+	listingFile << "\n\nCOMPILATION TERMINATED" << setw(7) << right << e << " ERRORS ENCOUNTERED\n";
+}
+
+void PrintSymbolTable()
+{
+	//time_t now = time(nullptr);
+	//objectFile << "STAGE0:  Jonathan Gonzales and Lucas Levesque, " << ctime(&now) << "\n";
+	for (uint i = 0; i < symbolTable.size(); i++)
+	{
+		if (symbolTable[i].alloc == YES)
+		{
+			objectFile << setw(4) << left << symbolTable[i].internalName << "  ";
+			if (symbolTable[i].mode == CONSTANT)
+			{
+				objectFile << setw(3) << "DEC " << right;
+				if ((symbolTable[i].value)[0] == '-')
+				{
+					string temp = symbolTable[i].value;
+					temp[0] = '0';
+					objectFile << "-" << setw(3) << setfill('0') << temp << setfill(' ') << "  " << "   " << symbolTable[i].externalName << endl;;
+				}
+				else
+				{
+					objectFile << setw(4) << setfill('0') << symbolTable[i].value << setfill(' ') << "  " << "   " << symbolTable[i].externalName << endl;;
+				}
+			}
+			else if (symbolTable[i].mode == VARIABLE)
+			{
+				objectFile << setw(3) << "BSS " << setw(4) << "0001" << "  " << "   " << symbolTable[i].externalName << endl; 
+			}
+		}
+	}
+	objectFile << setw(4) << "" << "  " << setw(3) << "END " << setw(4) << "STRT" << "     " << endl;
+	
+	//objectFile << endl << endl << "Symbol Table\n\n";
+	
+	//for (uint i = 0; i < symbolTable.size(); ++i)
+	//{
+	//	objectFile << setw(15) << left << (symbolTable[i].externalName) << "  " << setw(4) << symbolTable[i].internalName << "  " << setw(9) << right << printType(i)
+	//			<< "  " << setw(8) << right << printMode(i) << "  " << setw(15) << right << symbolTable[i].value << "  " << setw(3) << right << printAlloc(i)
+	//			<< "  " << symbolTable[i].units << "\n";
+	//}
+}
+
+//-------Prog() - production 1-----------------
+
+void Prog() //token should be "program"
+{
+	ProgStmt();
+	
+	if (token == "const") 
+	{
+		Consts();
+	}
+	if (token == "var") 
+	{
+		Vars();
+	}
+	if (token != "begin")
+	{
+		throw(2); //keyword "begin" expected
+	}
+	BeginEndStmt();
+	NextToken();
+	if (!sourceFile.eof())
+	{
+		throw(3); // no text may follow "end"
+	}
+}
+
+//-------ProgStmt() - production 2-----------------
+
+void ProgStmt() //token should be "program"
+{
+	string x;
+	x = NextToken().substr(0,15);
+	if (!isNonKeyID(token))
+	{
+		throw(4); // program name expected
+	}
+	if (NextToken() != ";")
+	{
+		throw(5); // ";" expected
+	}
+	NextToken();
+	Insert(x,PROG_NAME,CONSTANT,x,NO,0);
+}
+
+//-------Consts() - production 3-----------------
+
+void Consts() //token should be "const"
+{
+	if (token != "const")
+	{
+		throw(6); // keyword "const" expected
+	}
+	if (!isNonKeyID(NextToken()))
+	{
+		throw(7); // non-keyword identifier must follow "const"
+	}
+	ConstStmts();
+}
+
+//-------Vars() - production 4-----------------
+
+void Vars() //token should be "var"
+{
+	if (token != "var")
+	{
+		throw(8); // keyword "var" expected
+	}
+	if (!isNonKeyID(NextToken()))
+	{
+		throw(9); // non-keyword identifier must follow "var"
+	}
+	
+	VarStmts();
+}
+
+//-------BeginEndStmt() - production 5-----------------
+
+void BeginEndStmt() //token should be "begin"
+{
+	if (token != "begin")
+	{
+		throw(10); // keyword "begin" expected
+	}
+	if (BeginCounter == 0)
+	{
+		Code("begin", "", "");
+	}
+	BeginCounter++;
+    if(isNonKeyID(NextToken()) || token == "read" || token == "write" || token == "while" || token == "if" || token == "repeat" || token == ";" || token == "begin")
+    {
+		ExecStmts();
+    }
+	if (token != "end")
+	{
+		throw(11); // keyword "end" expected
+	}
+	BeginCounter--;
+	if (NextToken() != "." && BeginCounter == 0)
+	{
+		throw(12); // "." expected
+	}
+	if (token != ";" && BeginCounter > 0)
+	{
+		throw(5);
+	}
+	if (BeginCounter == 0)
+	{
+		Code("end","","");
+	}
+}
+
+//-------ConstStmts() - production 6-----------------
+
+void ConstStmts() //token should be NON_KEY_ID
+{
+	string x,y;
+	if (!isNonKeyID(token))
+	{
+		throw(13); // non-keyword identifier expected
+	}
+	x = token;
+	if (NextToken() != "=")
+	{
+		throw(14); // "=" expected
+	}
+	y = NextToken(); 
+	if (y != "+" && y != "-" && y != "not" && !isNonKeyID(y) && y != "true" && y != "false" && !isInteger(y))
+	{
+		throw(15); // token to right of "=" illegal
+	}
+	if (y == "+" || y == "-")
+	{
+		if(!isInteger(NextToken()))
+			throw(16); // integer expected after sign
+		y = y + token;
+	}
+	else if (y == "not")
+	{
+		if(NextToken() != "true" && token != "false" && symbolTable[getIndex(token)].dataType != BOOLEAN)
+			throw(17); // boolean expected after not
+		if(token == "true")
+		{
+			y = "false";
+		}
+		else if (token == "false")
+		{
+			y = "true";
+		}
+		else if (isNonKeyID(token) && exists(token))
+		{
+			int index = getIndex(token);
+			if (symbolTable[index].value == "0")
+			{
+				y = "true";
+			}
+			else if (symbolTable[index].value == "1")
+			{
+				y = "false";
+			}
+		}
+	}
+	if (NextToken() != ";")
+	{
+		throw(5); // ";" expected
+	}
+	Insert(x,WhichType(y),CONSTANT,WhichValue(y),YES,1);
+	if (NextToken() != "begin" && token != "var" && !isNonKeyID(token))
+	{
+		throw(18); //non-keyword identifier, "begin", or "var" expected
+	}
+	if (isNonKeyID(token))
+	{
+		ConstStmts();
+	}
+}
+
+//-------VarStmts() - production 7-----------------
+
+void VarStmts() //token should be NON_KEY_ID
+{
+	string x,y;
+	storeType type;
+	if (!isNonKeyID(token))
+	{
+		throw(13); // non-keyword identifier expected
+	}
+	x = Ids();
+	if (token != ":")
+	{
+		throw(19); // ":" expected
+	}
+	if(NextToken() != "integer" && token !="boolean")
+	{
+		throw(20); // illegal type follows
+	}
+	y = token;
+	if (y == "integer")  /*Need to implement with the which type function*/
+	{
+		type = INTEGER;
+	}
+	else if (y == "boolean")
+	{
+		type = BOOLEAN;
+	}
+	if(NextToken() != ";")
+	{
+		throw(5); // ";" expected
+	}
+	
+	Insert(x,type,VARIABLE,"",YES,1);
+	if (NextToken() != "begin" && !isNonKeyID(token))
+	{
+		throw(21); //non-keyword identifier or "begin" expected
+	}
+	if (isNonKeyID(token))
+	{
+		VarStmts();
+	}
+}
+
+//-------Ids() - production 8-----------------
+
+string Ids() //token should be NON_KEY_ID
+{
+	
+	string temp,tempString;
+	if (!isNonKeyID(token))
+	{
+		throw(13); // non-keyword identifier expected
+	}
+	tempString = token;
+	temp = token;
+	if(NextToken() == ",")
+	{
+		if (!isNonKeyID(NextToken()))
+		{
+			throw(13); // non-keyword identifier expected
+		}
+		tempString = temp + "," + Ids();
+	}
+	return tempString;
+}
+
+//-------ExecStmts()-----------------
+
+void ExecStmts()
+{
+    
+    if(!isNonKeyID(token) && token != "read" && token != "write" && token != "while" && token != "if" && token != "repeat" && token != ";" && token != "begin")
+    {
+		throw(53);/*Expected nonkey-id, read, write, or end*/;
+    }
+	ExecStmt();
+	  if(isNonKeyID(token) || token == "read" || token == "write" || token == "begin" || token == ";" || token == "if" || token == "while" || token == "repeat")
+    {
+        ExecStmts();  //check for more stmts and do them
+    }
+	
+}
+
+//-------ExecStmt()-----------------
+
+void ExecStmt()
+{
+		if (isNonKeyID(token))
+		{
+			AssignStmt();
+		}
+		else if (token == "read")
+		{
+			ReadStmt();
+		}
+		else if (token == "write")
+		{
+			WriteStmt();
+		}
+		else if (token == "if")
+		{
+			IfStmt();
+		}
+		else if (token == "while")
+		{
+			WhileStmt();
+		}
+		else if (token == "repeat")
+		{
+			RepeatStmt();
+		}
+		else if (token == ";")
+		{
+			NullStmt();
+		}
+		else if (token == "begin")
+		{
+			BeginEndStmt();
+			NextToken();
+		}
+		else
+		{
+			throw(53); /*Expected nonkey-id, read, or write*/
+		}
+}
+
+//-------AssignStmts()-----------------
+
+void AssignStmt()
+{
+    if (!isNonKeyID(token))
+    {
+        throw(13); // non-keyword identifier expected
+    }
+    PushOperand(token);
+    if (NextToken() != ":=")
+    {
+        throw(32); // ":=" expected
+    }
+    PushOperator(token);
+	NextToken();
+    Express();
+    if (token != ";")
+    {
+        throw(5); // \";\" expected"
+    }
+    string op = PopOperator();
+	string rhs = PopOperand();
+    string lhs = PopOperand();
+    Code(op,rhs,lhs);
+}
+
+//-------ReadStmts()-----------------
+
+void ReadStmt()
+{
+    ReadList();
+    if (NextToken() != ";")
+    {
+        throw(5); // \";\" expected"
+    }
+}
+
+//-------ReadList()-----------------
+
+void ReadList()
+{
+    if (NextToken() != "(")
+    {
+        throw(33); // \"(\" expected
+    }
+	NextToken();
+    string list = Ids();
+    if (token != ")")
+    {
+        throw(34); // \")\" expected"
+    }
+	
+	istringstream names(list);
+	string current;
+
+	while (getline(names,current,','))
+	{
+		current = current.substr(0,15);
+		int i = getIndex(current);
+		if (i == -1)
+		{
+			throw(43);
+		}
+		if (symbolTable[i].mode != VARIABLE)
+		{
+			throw(54);
+		}
+        Code("read", symbolTable[i].internalName, "");
+	}
+}
+
+//-------WriteStmt()-----------------
+
+void WriteStmt()
+{
+    WriteList();
+    if (NextToken() != ";")
+    {
+        throw(5); // \";\" expected"
+    }
+}
+
+//-------WriteList()-----------------
+
+void WriteList()
+{
+    if (NextToken() != "(")
+    {
+        throw(33); // \"(\" expected
+    }
+	NextToken();
+    string list = Ids();
+    if (token != ")")
+    {
+        throw(34); // \")\" expected"
+    }
+	
+	istringstream names(list);
+	string current;
+	
+	while (getline(names,current,','))
+	{
+		current = current.substr(0,15);
+		int i = getIndex(current);
+		if (i == -1)
+		{
+			throw(52);
+		}
+        Code("write", symbolTable[i].internalName, "");
+	}
+}
+
+//-------Express()-----------------
+
+void Express()
+{
+    if (token != "not" && token != "true" && token != "false" && token != "(" && token != "+" && token != "-" && !isInteger(token) && !isNonKeyID(token))
+    {
+        throw(35); // \"not\" or \"true\" or \"false\" or \"(\" or \"+\" or \"-\" or integer or non-keyword identifier expected
+    }
+    Term();
+    Expresses();
+}
+
+//-------Expresses()-----------------
+
+void Expresses()
+{
+    if(token == "<>" || token == "=" || token == "<=" || token == ">=" || token == "<" || token == ">")
+    {
+        RelOp();
+        PushOperator(token);
+		NextToken();
+        Term();
+        string op = PopOperator();
+        string rhs = PopOperand();
+        string lhs = PopOperand();
+        Code(op,rhs,lhs);
+        Expresses();
+    }
+    else if(token != ")" && token != ";" && token != "do" && token != "then")
+    {
+        throw(36); // \"<>\" or \"=\" or \"<=\" or \">=\" or \"<\" or \">\" or \")\" or \";\" expected
+    }
+}
+
+//-------Term()-----------------
+
+void Term()
+{
+    if (token != "not" && token != "true" && token != "false" && token != "(" && token != "+" && token != "-" && !isInteger(token) && !isNonKeyID(token))
+    {
+        throw(35); // \"not\" or \"true\" or \"false\" or \"(\" or \"+\" or \"-\" or integer or non-keyword identifier expected
+    }
+	Factor();
+	Terms();
+}
+
+//-------Terms()-----------------
+
+void Terms()
+{
+    if (token == "-" || token == "+" || token == "or")
+    {
+        AddLevelOp();
+        PushOperator(token);
+		NextToken();
+        Factor();
+        string op = PopOperator();
+        string rhs = PopOperand();
+        string lhs = PopOperand();
+        Code(op,rhs,lhs);
+        Terms();
+    }
+    else if(token != "<>" && token != "=" && token != "<=" && token != ">=" && token != "<" && token != ">" && token != ")" && token != ";" && token != "then" && token != "do")
+    {
+        throw(36); // \"<>\" or \"=\" or \"<=\" or \">=\" or \"<\" or \">\" or \")\" or \";\" expected
+    }
+}
+
+//-------Factor()-----------------
+
+void Factor()
+{
+    if (token != "not" && token != "true" && token != "false" && token != "(" && token != "+" && token != "-" && !isInteger(token) && !isNonKeyID(token))
+    {
+        throw(35); // \"not\" or \"true\" or \"false\" or \"(\" or \"+\" or \"-\" or integer or non-keyword identifier expected
+    }
+    Part();
+    Factors();
+}
+
+//-------Factors()-----------------
+
+void Factors()
+{
+    if (token == "*" || token == "div" || token == "mod" || token == "and")
+    {
+        MultLevelOp();
+        PushOperator(token);
+		NextToken();
+        Part();
+        string op = PopOperator();
+        string rhs = PopOperand();
+        string lhs = PopOperand();
+        Code(op,rhs,lhs);
+        Factors();
+    }
+    else if(token != "<>" && token != "=" && token != "<=" && token != ">=" && token != "<" && token != ">" && token != ")" && token != ";" && token != "-" && token != "+" && token != "or" && token != "then" && token != "do")
+    {
+        throw(37); // \"<>\" or \"=\" or \"<=\" or \">=\" or \"<\" or \">\" or \")\" or \";\" or \"-\" or \"+\" or \"or\" expected
+    }
+}
+
+//-------Part()-----------------
+
+void Part()
+{
+    if(token == "not")
+    {
+        if (NextToken() == "(")
+        {
+			NextToken();
+            Express();
+            if (token == ")")
+            {
+                string op = PopOperand();
+                Code("not",op, "");
+            }
+            else
+            {
+                throw(34); // \")\" expected
+            }
+			NextToken();
+        }
+        else if (token == "true")
+        {
+			PushOperand("FALS");
+			NextToken();
+        }
+		else if (token == "false")
+        {
+			PushOperand("TRUE");
+			NextToken();
+        }
+        else if (isNonKeyID(token))
+        {
+			int index = getIndex(token);
+			if (index == -1)
+			{
+				throw(52);
+			}
+            Code("not", symbolTable[index].internalName, "");
+			NextToken();
+        }
+        else
+        {
+            throw(55);/*throw*/
+        }
+    }
+    else if (token == "+")
+    {
+        if (NextToken() == "(")
+        {
+			NextToken();
+            Express();
+            if (token != ")")
+            {
+                throw(34); // \")\" expected
+            }
+			NextToken();
+        }
+        else if (isInteger(token) || isNonKeyID(token))
+        {
+             PushOperand(token);
+			 NextToken();
+        }
+        else
+        {
+            throw(38);   // \"(\" or \"Integer\" or \"non-keyword identifier\" expected
+        }
+    }
+    else if (token == "-")
+    {
+        if (NextToken() == "(")
+        {
+			NextToken();
+            Express();
+            if (token != ")")
+            {
+                throw(34);
+            }
+			//string op = PopOperand();
+			if(!exists("-1"))
+			{
+				Insert("-1", INTEGER, CONSTANT, "-1", YES, 1);
+				PushOperand("-1");
+			}
+			else
+			{
+				PushOperand("-1");
+			}
+			//PushOperator("*");
+			//string op2 = PopOperand();
+			//Code("*", op, op2);
+			string op1 = PopOperand();
+			string op2 = PopOperand();
+			Code("*", op1, op2);
+			NextToken();
+        }
+        else if (isInteger(token))
+        {
+             PushOperand("-" + token);
+			 NextToken();
+        }
+        else if (isNonKeyID(token))
+        {
+			 PushOperand(token);
+			 //string op = PopOperand();
+			 if(!exists("-1"))
+			 {
+				Insert("-1", INTEGER, CONSTANT, "-1", YES, 1);
+				PushOperand("-1");
+			 }
+			 else
+			 {
+				PushOperand("-1");
+			 }
+			 //PushOperator("*");
+			 //string op2 = PopOperand();
+             //Code("*",op,op2);
+			 string op1 = PopOperand();
+			 string op2 = PopOperand();
+			 Code("*", op1, op2);
+			 NextToken();
+        }
+        else
+        {
+            throw(38);   // \"(\" or \"Integer\" or \"non-keyword identifier\" expected
+        }
+    }
+    else if (isInteger(token) || token == "true" || token == "false" || isNonKeyID(token))
+    {
+        PushOperand(token);
+		NextToken();
+    }
+    else if (token == "(")
+    {
+		NextToken();
+        Express();
+        if (token != ")")
+        {
+            throw(34); // \")\" expected
+        }
+		NextToken();
+    }
+    else
+    {
+        throw(39); // \"not\" or \"+\" or \"-\" or \"integer\" or \"true\" or \"false\" or \"non-keyword identifier\" or \"(\" expected"
+    }
+}
+
+//-------RelOp()-----------------
+
+void RelOp()
+{
+    if (token != "=" && token != "<>" && token != "<=" && token != ">=" && token != "<" && token != ">")
+    {
+        throw(40); // \"<>\" or \"=\" or \"<=\" or \">=\" or \"<\" or \">\" expected
+    }
+}
+
+//-------AddLevelOp()-----------------
+
+void AddLevelOp()
+{
+    if (token != "+" && token != "-" && token != "or")
+    {
+        throw(41); // \"+\" or \"-\" or \"or\" expected
+    }
+}
+
+//-------MultLevelOp()-----------------
+
+void MultLevelOp()
+{
+    if (token != "*" && token != "div" && token != "mod" && token != "and")
+    {
+        throw(42); // \"*\" or \"div\" or \"mod\" or \"and\" expected
+    }
+}
+
+//-------IfStmt()----------------
+
+void IfStmt()
+{
+	if (token != "if")
+	{
+		throw(56);
+	}
+	NextToken();
+	Express();
+	if (token != "then")
+	{
+		throw(57);
+	}
+	NextToken();
+	string op = PopOperand();
+	if (symbolTable[getIndex(op)].dataType != BOOLEAN)
+	{
+		throw(58);
+	}
+	Code("then", op, "");
+	ExecStmt();
+	if (token == ";")
+	{
+		NextToken();
+	}
+	ElsePt();
+}
+
+//----------ElsePt-------------
+
+void ElsePt()
+{
+	if (token == "else")
+	{
+		string op = PopOperand();
+        Code("else",op,"");
+		NextToken();
+		ExecStmt();
+		op = PopOperand();
+        Code("post_if",op,"");
+	}
+	else
+	{
+		string op = PopOperand();
+        Code("post_if",op,"");
+	}
+}
+
+//--------WhileStmt-------------
+
+void WhileStmt()
+{
+	if (token != "while")
+	{
+		throw(59);
+	}
+	NextToken();
+	Code("while","","");
+	Express();
+	if (token != "do")
+	{
+		throw(60);
+	}
+	NextToken();
+	string op = PopOperand();
+	if (symbolTable[getIndex(op)].dataType != BOOLEAN)
+	{
+		throw(61);
+	}
+	Code("do", op,"");
+	ExecStmt();
+	op = PopOperand();
+    string op2 = PopOperand();
+    Code("post_while",op,op2);
+}
+
+//--------RepeatStmt-------------
+
+void RepeatStmt()
+{
+	if (token != "repeat")
+	{
+		throw(62);
+	}
+	NextToken();
+	Code("repeat","","");
+	ExecStmts();
+	if (token != "until")
+	{
+		throw(63);
+	}
+	NextToken();
+	Express();
+	string op1 = PopOperand();
+	string op2 = PopOperand();
+    Code("until", op1, op2);
+	if (token != ";")
+	{
+		throw(5);
+	}
+	NextToken();
+}
+
+//--------NullStmt-------------
+
+void NullStmt()
+{
+	if (token != ";")
+	{
+		throw(5);
+	}
+	NextToken();
+}
+																						/*-------Parser-----------------*/
+//------Insert()-----------------
+
+void Insert(string externalName,storeType inType, modes inMode, string inValue, allocation inAlloc, int inUnits)
+//create symbol table entry for each identifier in list of external names
+//Multiply inserted names are illegal
+{
+	istringstream names(externalName);
+	string name;
+
+	while (getline(names,name,','))
+	{
+		name = name.substr(0,15);
+		entry e;
+		for (uint i = 0; i < symbolTable.size(); i++)
+		{	
+			if (symbolTable[i].externalName == name)
+			{
+				throw(22); // multiple name definition
+			}	
+			else if (name == "program" || name == "const" || name == "var" || name == "integer" || name == "boolean" || name == "begin" || name == "end" /*|| name == "true" || name == "false"*/ || name == "not")
+			{
+				throw(23); // illegal use of keyword
+			}
+		}
+		if (symbolTable.size() + 1 > MAX_SYMBOL_TABLE_SIZE)
+		{
+			throw(30); //Too many entries
+		}
+		else
+		{
+			if (externalName[0] == 'T' && externalName != "TRUE")
+			{
+				e.internalName = name;
+			}
+			else if (externalName == "TRUE")
+			{
+				e.internalName = "TRUE";
+			}
+			else if (externalName == "FALSE")
+			{
+				e.internalName = "FALS";
+			}
+			else
+			{
+				e.internalName=GenInternalName(inType);
+			}
+			e.externalName=name;
+			e.dataType=inType;
+			e.mode=inMode;
+			e.value=inValue;
+			e.alloc=inAlloc;
+			e.units=inUnits;
+			symbolTable.push_back(e);
+		}
+	}	
+}
+ 
+//-------WhichType()-----------------
+
+storeType WhichType(string name) //tells which data type a name has
+{
+	storeType temp;
+
+	if (isInteger(name) || name == "true" || name == "false" || name == "TRUE" || name == "FALSE")
+	{
+		if (name == "true" || name == "false" || name == "TRUE" || name == "FALSE") /*name is a boolean literal then data type = BOOLEAN*/
+		{
+			temp = BOOLEAN;
+		} 
+		else /*data type = INTEGER*/
+		{
+			temp = INTEGER;
+		}
+	}
+	else //name is an identifier and hopefully a constant
+	{
+		for (uint i = 0; i < symbolTable.size(); i++)
+		{
+			if (symbolTable[i].mode == CONSTANT)
+			{
+				temp = symbolTable[i].dataType;
+			}
+			else
+			{
+				throw(24); // reference to undefined constant
+			}
+		}
+	}
+	return temp; /*data type*/
+}
+
+//-------WhichValue()-----------------
+
+string WhichValue(string name) //tells which value a name has
+{
+	string value;
+	uint i;
+
+   //if name is a literal (bool or int)
+   if(isInteger(name))
+   {
+      value = name;
+   }
+   else if(name == "true")
+   {
+      value = "1";
+   }
+   else if(name == "false")
+   {
+      value = "0";
+   }
+   else
+   {
+	   for (i = 0; i < symbolTable.size(); i++)
+	   {
+		   if (symbolTable[i].externalName == name && symbolTable[i].dataType == PROG_NAME)
+		   {
+			   throw(31);
+		   }
+		   else if ((symbolTable[i].externalName == name || symbolTable[i].internalName == name) && symbolTable[i].dataType != PROG_NAME)
+		   {
+			   value = symbolTable[i].value;
+		   }
+	   }
+	   if (value.empty())
+	   {
+		   throw(24);
+	   }
+   }
+
+   return value;
+}
+
+//-------PushOperator()--------------
+void PushOperator(string name) //push name onto operatorStk
+{
+	operatorStack.push(name);
+}
+
+//-------PushOperand()--------------
+void PushOperand(string name) //push name onto operandStk
+{
+	int index;
+	bool exists = false;
+	name = name.substr(0,15);
+	for (uint i = 0; i < symbolTable.size(); i++)  //For literals
+	{
+		if(symbolTable[i].externalName == name)
+		{
+			exists = true;
+			break;
+		}
+	}
+	if(!exists && (isInteger(name) || name == "true" || name == "false"))
+	{
+		Insert(name, WhichType(name), CONSTANT, WhichValue(name), YES, 1);
+	}
+	if (getIndex(name) == -1 && name[0] != 'L')
+	{
+		throw(43);
+	}
+	if (name[0] == 'L')
+	{
+		operandStack.push(name);
+	}
+	else
+	{
+		index = getIndex(name);
+		operandStack.push(symbolTable[index].internalName);
+	}
+}
+
+//-------PopOperator()--------------
+string PopOperator() //pop name from operatorStk
+{
+	string temp;
+	if(!operatorStack.empty())
+	{
+		temp = operatorStack.top();
+		operatorStack.pop();
+		return temp;
+	}
+	else
+	{
+		throw(46);/*process error: operator stack underflow;*/
+	}
+	return "THIS SHOULDNT HAPPEN";
+}
+
+//-------PopOperand()--------------
+string PopOperand() //pop name from operandStk
+{
+	string temp;
+	if(!operandStack.empty())
+	{
+		temp = operandStack.top();
+		operandStack.pop();
+		return temp;
+	}
+	else 
+	{
+		throw(47);/*process error: operand stack underflow;*/
+	}
+	return "THIS SHOULDNT HAPPEN";
+}
+
+void FreeTemp()
+{
+	tempCount--;
+	if (tempCount < -1)
+	{
+		throw(45);/*compiler error, currentTempNo should be >= –1*/
+	}
+}
+
+string GetTemp()
+{
+	string temp = "T";
+	tempCount++;
+	temp+=to_string(tempCount);
+	if (tempCount > maxTemp)
+	{
+		Insert(temp, UNKNOWN, VARIABLE, "", NO, 0);
+		maxTemp++;
+	}
+	return temp;
+
+}
+
+//-------EmitAdditionCode------------
+void EmitAdditionCode(string operand1,string operand2) //add operand1 to operand2
+{
+	int index1 = getIndex(operand1);
+	int index2 = getIndex(operand2);
+	
+	if (symbolTable[index1].dataType != INTEGER || symbolTable[index2].dataType != INTEGER)
+	{
+		throw(48);/*process error: illegal type*/
+	}
+	if (contentsOfA != operand1 && contentsOfA != operand2 && contentsOfA[0] == 'T' && contentsOfA != "TRUE")
+	{
+		//objectFile << "STA " << contentsOfA << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "STA " << setw(4) << contentsOfA << "  " << "   " << "deassign AReg" << endl;
+		int index = getIndex(contentsOfA);
+		symbolTable[index].alloc = YES;
+		contentsOfA = "";
+	}
+	if (contentsOfA != operand1 && contentsOfA != operand2 && contentsOfA[0] != 'T')
+	{
+		contentsOfA = ""; 
+	}
+	if (contentsOfA != operand1 && contentsOfA != operand2)
+	{
+		contentsOfA = "";
+		//objectFile << "LDA " << operand2 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "LDA " << setw(4) << operand2 << "     " << endl;
+		contentsOfA = operand2;
+	}
+	if (contentsOfA == operand1)
+	{
+		//objectFile << "IAD " << operand2 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "IAD " << setw(4) << operand2 << "  " << "   " << symbolTable[index2].externalName << " + " << symbolTable[index1].externalName << endl;
+	}
+	else if (contentsOfA == operand2)
+	{
+		//objectFile << "IAD " << operand1 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "IAD " << setw(4) << operand1 << "  " << "   " << symbolTable[index2].externalName << " + " << symbolTable[index1].externalName << endl;
+	}
+	if (operand1[0] == 'T' && operand1 != "TRUE")
+	{
+		FreeTemp();
+	}
+	if (operand2[0] == 'T' && operand2 != "TRUE")
+	{
+		FreeTemp();
+	}
+	
+	contentsOfA = GetTemp();
+	int index = getIndex(contentsOfA);
+	symbolTable[index].dataType = INTEGER;
+	PushOperand(contentsOfA);
+}
+
+//-------EmitSubtractionCode------------
+void EmitSubtractionCode(string operand1,string operand2) //add operand1 to operand2
+{
+	int index1 = getIndex(operand1);
+	int index2 = getIndex(operand2);
+	
+	if (symbolTable[index1].dataType != INTEGER || symbolTable[index2].dataType != INTEGER)
+	{
+		throw(48);/*process error: illegal type*/
+	}
+	if (contentsOfA != operand2 && contentsOfA[0] == 'T' && contentsOfA != "TRUE")
+	{
+		//objectFile << "STA " << contentsOfA << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "STA " << setw(4) << contentsOfA << "  " << "   " << "deassign AReg" << endl;
+		int index = getIndex(contentsOfA);
+		symbolTable[index].alloc = YES;
+		contentsOfA = "";
+	}
+	if (contentsOfA != operand1 && contentsOfA != operand2 && contentsOfA[0] != 'T')
+	{
+		contentsOfA = ""; 
+	}
+	if (contentsOfA != operand2)
+	{
+		contentsOfA = "";
+		//objectFile << "LDA " << operand2 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "LDA " << setw(4) << operand2 << "     " << endl;
+		contentsOfA = operand2;
+	}
+	//objectFile << "ISB" << operand1 << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "ISB " << setw(4) << operand1 << "  " << "   " << symbolTable[index2].externalName << " - " << symbolTable[index1].externalName << endl;
+	
+	if (operand1[0] == 'T' && operand1 != "TRUE")
+	{
+		FreeTemp();
+	}
+	if (operand2[0] == 'T' && operand2 != "TRUE")
+	{
+		FreeTemp();
+	}
+	
+	contentsOfA = GetTemp();
+	int index = getIndex(contentsOfA);
+	symbolTable[index].dataType = INTEGER;
+	PushOperand(contentsOfA);
+}
+
+//-------EmitDivisionCode()-----------------
+void EmitDivisionCode(string operand1,string operand2) //divide operand2 by operand1
+{
+	int index1 = getIndex(operand1);
+	int index2 = getIndex(operand2);
+	
+	if (symbolTable[index1].dataType != INTEGER || symbolTable[index2].dataType != INTEGER)
+	{
+		throw(48);/*process error: illegal type*/
+	}
+	if ( contentsOfA != operand2 && contentsOfA[0] == 'T' && contentsOfA != "TRUE")
+	{
+		//objectFile << "STA " << contentsOfA << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "STA " << setw(4) << contentsOfA << "  " << "   " << "deassign AReg" << endl;
+		int index = getIndex(contentsOfA);
+		symbolTable[index].alloc = YES;
+		contentsOfA = "";
+	}
+	if (contentsOfA != operand1 && contentsOfA != operand2 && contentsOfA[0] != 'T')
+	{
+		contentsOfA = ""; 
+	}
+	if (contentsOfA != operand2)
+	{
+		contentsOfA = "";
+		//objectFile << "LDA " << operand2 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "LDA " << setw(4) << operand2 << "     " << endl;
+		contentsOfA = operand2;
+	}
+	//objectFile << "IDV" << operand1 << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "IDV " << setw(4) << operand1 << "  " << "   " << symbolTable[index2].externalName << " div " << symbolTable[index1].externalName<< endl;
+	if (operand1[0] == 'T' && operand1 != "TRUE")
+	{
+		FreeTemp();
+	}
+	if (operand2[0] == 'T' && operand2 != "TRUE")
+	{
+		FreeTemp();
+	}
+	
+	contentsOfA = GetTemp();
+	int index = getIndex(contentsOfA);
+	symbolTable[index].dataType = INTEGER;
+	PushOperand(contentsOfA);
+}
+
+//-------EmitMultiplicationCode()-----------------
+void EmitMultiplicationCode(string operand1,string operand2) //multiply operand2 by operand1
+{
+	int index1 = getIndex(operand1);
+	int index2 = getIndex(operand2);
+	
+	if (symbolTable[index1].dataType != INTEGER || symbolTable[index2].dataType != INTEGER)
+	{
+		throw(48);/*process error: illegal type*/
+	}
+	if ((contentsOfA != operand1 && contentsOfA != operand2) && contentsOfA[0] == 'T' && contentsOfA != "TRUE")
+	{
+		//objectFile << "STA " << contentsOfA << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "STA " << setw(4) << contentsOfA << "  " << "   " << "deassign AReg" << endl;
+		int index = getIndex(contentsOfA);
+		symbolTable[index].alloc = YES;
+		contentsOfA = "";
+	}
+	if (contentsOfA != operand1 && contentsOfA != operand2 && contentsOfA[0] != 'T')
+	{
+		contentsOfA = ""; 
+	}
+	if (contentsOfA != operand1 && contentsOfA != operand2)
+	{
+		contentsOfA = "";
+		//objectFile << "LDA " << operand2 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "LDA " << setw(4) << operand2 << "     " << endl;
+		contentsOfA = operand2;
+	}
+	if (contentsOfA == operand1)
+	{
+		//objectFile << "IMU " << operand2 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "IMU " << setw(4) << operand2 << "  " << "   " << symbolTable[index2].externalName << " * " << symbolTable[index1].externalName << endl;
+	}
+	else if (contentsOfA == operand2)
+	{
+		//objectFile << "IMU " << operand1 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "IMU " << setw(4) << operand1 << "  " << "   " << symbolTable[index2].externalName << " * " << symbolTable[index1].externalName << endl;
+	}
+	if (operand1[0] == 'T' && operand1 != "TRUE")
+	{
+		FreeTemp();
+	}
+	if (operand2[0] == 'T' && operand2 != "TRUE")
+	{
+		FreeTemp();
+	}
+	
+	contentsOfA = GetTemp();
+	int index = getIndex(contentsOfA);
+	symbolTable[index].dataType = INTEGER;
+	PushOperand(contentsOfA);
+}
+
+//-------EmitModCode()-----------------
+void EmitModCode(string operand1,string operand2) //mod operand2 by operand1
+{
+	int index1 = getIndex(operand1);
+	int index2 = getIndex(operand2);
+	
+	if (symbolTable[index1].dataType != INTEGER || symbolTable[index2].dataType != INTEGER)
+	{
+		throw(48);/*process error: illegal type*/
+	}
+	if (/*contentsOfA != operand1 &&*/ contentsOfA != operand2 && contentsOfA[0] == 'T' && contentsOfA != "TRUE")
+	{
+		//objectFile << "STA " << contentsOfA << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "STA " << setw(4) << contentsOfA << "  " << "   " << "deassign AReg" << endl;
+		int index = getIndex(contentsOfA);
+		symbolTable[index].alloc = YES;
+		contentsOfA = "";
+	}
+	if (contentsOfA != operand1 && contentsOfA != operand2 && contentsOfA[0] != 'T')
+	{
+		contentsOfA = ""; 
+	}
+	if (contentsOfA != operand2)
+	{
+		contentsOfA = "";
+		//objectFile << "LDA " << operand2 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "LDA " << setw(4) << operand2 << "     " << endl;
+		contentsOfA = operand2;
+	}
+	//objectFile << "IDV" << operand1 << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "IDV " << setw(4) << operand1 << "  " << "   " << symbolTable[index2].externalName << " mod " << symbolTable[index1].externalName << endl;
+	if (operand1[0] == 'T' && operand1 != "TRUE")
+	{
+		FreeTemp();
+	}
+	if (operand2[0] == 'T' && operand2 != "TRUE")
+	{
+		FreeTemp();
+	}
+	
+	contentsOfA = GetTemp();
+	//objectFile << "STQ " << contentsOfA << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "STQ " << setw(4) << contentsOfA << "  " << "   " << "store remainder in memory" << endl;
+	//objectFile << "LDA " << contentsOfA << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "LDA " << setw(4) << contentsOfA << "  " << "   " << "load remainder from memory" << endl;
+	int index = getIndex(contentsOfA);
+	symbolTable[index].dataType = INTEGER;
+	symbolTable[index].alloc = YES;
+	symbolTable[index].units = 1;
+	PushOperand(contentsOfA);
+}
+
+//-------EmitAssignCode()-----------------
+void EmitAssignCode(string operand1,string operand2) //assign operand2 to operand1
+{
+	if (operand1 == "TRUE")
+	{
+		if (!exists("TRUE"))
+		{
+		Insert("TRUE", BOOLEAN, CONSTANT, "1", YES, 1);
+		}
+	}
+	if (operand1 == "FALS")
+	{
+		if (!exists("FALS"))
+		{
+		Insert("FALS", BOOLEAN, CONSTANT, "0", YES, 1);
+		}
+	}
+	int index1 = getIndex(operand1);
+	int index2 = getIndex(operand2);
+	if (symbolTable[index1].dataType != symbolTable[index2].dataType)
+	{
+		throw(50);/*process error: illegal type*/
+	}
+	if (symbolTable[index2].mode != VARIABLE)
+	{
+		throw(51);/*process error: symbol on left-hand side of assignment must have a storage mode of VARIABLE*/
+	}
+	if (contentsOfA != operand1)
+	{
+		//objectFile << "LDA " << operand1 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "LDA " << setw(4) << operand1 << "     " << endl;
+	}
+	//objectFile << "STA " << operand2 << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "STA " << setw(4) << left << operand2 << "  " << "   " << symbolTable[index2].externalName <<  " := " << symbolTable[index1].externalName << endl;
+	if (operand1[0] == 'T' && operand1 != "TRUE")
+	{
+		FreeTemp();
+	}
+	
+	contentsOfA = operand2;
+}
+
+//-------EmitAndCode()-----------------
+void EmitAndCode(string operand1, string operand2)
+{
+	int index1 = getIndex(operand1);
+	int index2 = getIndex(operand2);
+	
+	if (symbolTable[index1].dataType != BOOLEAN || symbolTable[index2].dataType != BOOLEAN)
+	{
+		throw(44);/*operator "and" requires boolean operands*/
+	}
+	if (contentsOfA[0] == 'T' && contentsOfA != "TRUE" && contentsOfA != operand1 && contentsOfA != operand2)
+	{
+		//objectFile << "STA " << contentsOfA << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "STA " << setw(4) << contentsOfA << "  " << "   " << "deassign AReg" << endl;
+		int index = getIndex(contentsOfA);
+		symbolTable[index].alloc = YES;
+		contentsOfA = "";
+	}
+	if(contentsOfA[0] != 'T' && contentsOfA != operand1 && contentsOfA != operand2)
+	{
+		contentsOfA = "";
+	}
+	if (contentsOfA != operand1 && contentsOfA != operand2)
+	{
+		contentsOfA = "";
+		//objectFile << "LDA " << operand2 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "LDA " << setw(4) << operand2 << "     " << endl;
+		contentsOfA = operand2;
+	}
+	if (contentsOfA == operand1)
+	{
+		//objectFile << "IMU " << operand2 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "IMU " << setw(4) << operand2 << "  " << "   " << symbolTable[index2].externalName <<  " and " << symbolTable[index1].externalName << endl;
+	}
+	if (contentsOfA == operand2)
+	{
+		//objectFile << "IMU " << operand1 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "IMU " << setw(4) << operand1 << "  " << "   " << symbolTable[index2].externalName <<  " and " << symbolTable[index1].externalName << endl;
+	}
+	if (operand1[0] == 'T' && operand1 != "TRUE")
+	{
+		FreeTemp();
+	}	
+	if (operand2[0] == 'T' && operand2 != "TRUE")
+	{
+		FreeTemp();
+	}
+	contentsOfA = GetTemp();
+	int index = getIndex(contentsOfA);
+	symbolTable[index].dataType = BOOLEAN;
+	PushOperand(contentsOfA);
+}
+
+//-------EmitOrCode()-----------------
+void EmitOrCode(string operand1, string operand2)
+{
+	int index1 = getIndex(operand1);
+	int index2 = getIndex(operand2);
+	
+	if (symbolTable[index1].dataType != BOOLEAN || symbolTable[index2].dataType != BOOLEAN)
+	{
+		throw(49);/*process error: illegal type*/
+	}
+	if (contentsOfA[0] == 'T' && contentsOfA != "TRUE" && contentsOfA != operand1 && contentsOfA != operand2)
+	{
+		//objectFile << "STA " << contentsOfA << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "STA " << setw(4) << contentsOfA << "  " << "   " << "deassign AReg" << endl;
+		int index = getIndex(contentsOfA);
+		symbolTable[index].alloc = YES;
+		contentsOfA = "";
+	}
+	if(contentsOfA[0] != 'T' && contentsOfA != operand1 && contentsOfA != operand2)
+	{
+		contentsOfA = "";
+	}
+	if (contentsOfA != operand1 && contentsOfA != operand2)
+	{
+		contentsOfA = "";
+		//objectFile << "LDA " << operand2 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "LDA " << setw(4) << operand2 << "     " << endl;
+		contentsOfA = operand2;
+	}
+	if (contentsOfA == operand1)
+	{
+		//objectFile << "IAD " << operand2 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "IAD " << setw(4) << operand2 << "  " << "   " << symbolTable[index2].externalName <<  " or " << symbolTable[index1].externalName << endl;
+	}
+	if (contentsOfA == operand2)
+	{
+		//objectFile << "IAD " << operand1 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "IAD " << setw(4) << operand1 << "  " << "   " << symbolTable[index2].externalName <<  " or " << symbolTable[index1].externalName << endl;
+	}
+	string label = getLabel();
+	//objectFile << "AZJ " << label << "+1" << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "AZJ " << setw(4) << label << "+1" << "   " << endl;
+	//objectFile << label << "LDA TRUE" << endl;
+	objectFile << setw(4) << label << "  " << setw(3) << "LDA " << setw(4) << "TRUE" << "     " << endl;
+	if (!exists("TRUE"))
+	{
+		Insert("TRUE", BOOLEAN, CONSTANT, "1", YES, 1);
+	}
+	if (operand1[0] == 'T' && operand1 != "TRUE")
+	{
+		FreeTemp();
+	}	
+	if (operand2[0] == 'T' && operand2 != "TRUE")
+	{
+		FreeTemp();
+	}
+	contentsOfA = GetTemp();
+	int index = getIndex(contentsOfA);
+	symbolTable[index].dataType = BOOLEAN;
+	PushOperand(contentsOfA);
+}
+
+//-------EmitEqualsCode()-----------------
+void EmitEqualsCode(string operand1, string operand2)
+{
+	int index1 = getIndex(operand1);
+	int index2 = getIndex(operand2);
+	
+	if (symbolTable[index1].dataType != symbolTable[index2].dataType)
+	{
+		throw(50);/*process error: incompatible types*/
+	}
+	if (contentsOfA[0] == 'T' && contentsOfA != "TRUE" && contentsOfA != operand1 && contentsOfA != operand2)
+	{
+		//objectFile << "STA " << contentsOfA << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "STA " << setw(4) << contentsOfA << "  " << "   " << "deassign AReg" << endl;
+		int index = getIndex(contentsOfA);
+		symbolTable[index].alloc = YES;
+		contentsOfA = "";
+	}
+	if (contentsOfA[0] != 'T' && contentsOfA != operand1 && contentsOfA != operand2)
+	{
+		contentsOfA = "";
+	}
+	if (contentsOfA != operand1 && contentsOfA != operand2)
+	{
+		contentsOfA = "";
+		//objectFile << "LDA " << operand2 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "LDA " << setw(4) << operand2 << "     " << endl;
+		contentsOfA = operand2;
+	}
+	if (contentsOfA == operand1)
+	{
+		//objectFile << "ISB " << operand2 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "ISB " << setw(4) << operand2 << "  " << "   " << symbolTable[index2].externalName <<  " = " << symbolTable[index1].externalName << endl;
+	}
+	if (contentsOfA == operand2)
+	{
+		//objectFile << "ISB " << operand1 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "ISB " << setw(4) << operand1 << "  " << "   " << symbolTable[index2].externalName <<  " = " << symbolTable[index1].externalName << endl;
+	}
+	string label = getLabel();
+	//objectFile << "AZJ " << label << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "AZJ " << setw(4) << label << "     " << endl;
+	//objectFile << "LDA FALS" << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "LDA " << setw(4) << "FALS" << "     " << endl;
+	if (!exists("FALS"))
+	{
+		Insert("FALSE", BOOLEAN, CONSTANT, "0", YES, 1);
+	}
+	//objectFile << "UNJ " << label << "+1" << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "UNJ " << setw(4) << label << "+1" << "   " << endl;
+	//objectFile << label << " LDA TRUE" << endl;
+	objectFile << setw(4) << label << "  " << setw(3) << "LDA " << setw(4) << "TRUE" << "     " << endl;
+	if (!exists("TRUE"))
+	{
+		Insert("TRUE", BOOLEAN, CONSTANT, "1", YES, 1);
+	}
+	if (operand1[0] == 'T' && operand1 != "TRUE")
+	{
+		FreeTemp();
+	}
+	if (operand2[0] == 'T' && operand2 != "TRUE")
+	{
+		FreeTemp();
+	}
+	contentsOfA = GetTemp();
+	int index = getIndex(contentsOfA);
+	symbolTable[index].dataType = BOOLEAN;
+	PushOperand(contentsOfA);
+}
+
+//-------EmitNotEqualsCode()-----------------
+void EmitNotEqualsCode(string operand1, string operand2)
+{
+	int index1 = getIndex(operand1);
+	int index2 = getIndex(operand2);
+	
+	if (symbolTable[index1].dataType != symbolTable[index2].dataType)
+	{
+		throw(50);/*process error: incompatible types*/
+	}
+	if (contentsOfA[0] == 'T' && contentsOfA != "TRUE" && contentsOfA != operand1 && contentsOfA != operand2)
+	{
+		//objectFile << "STA " << contentsOfA << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "STA " << setw(4) << contentsOfA << "  " << "   " << "deassign AReg" << endl;
+		int index = getIndex(contentsOfA);
+		symbolTable[index].alloc = YES;
+		contentsOfA = "";
+	}
+	if (contentsOfA[0] != 'T' && contentsOfA != operand1 && contentsOfA != operand2)
+	{
+		contentsOfA = "";
+	}
+	if (contentsOfA != operand1 && contentsOfA != operand2)
+	{
+		contentsOfA = "";
+		//objectFile << "LDA " << operand2 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "LDA " << setw(4) << operand2 << "     " << endl;
+		contentsOfA = operand2;
+	}
+	if (contentsOfA == operand1)
+	{
+		//objectFile << "ISB " << operand2 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "ISB " << setw(4) << operand2 << "  " << "   " << symbolTable[index2].externalName <<  " <> " << symbolTable[index1].externalName << endl;
+	}
+	if (contentsOfA == operand2)
+	{
+		//objectFile << "ISB " << operand1 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "ISB " << setw(4) << operand1 << "  " << "   " << symbolTable[index2].externalName <<  " <> " << symbolTable[index1].externalName << endl;
+	}
+	string label = getLabel();
+	//objectFile << "AZJ " << label << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "AZJ " << setw(4) << label << "+1" << "   " << endl;
+	//objectFile << "LDA TRUE" << endl;
+	objectFile << setw(4) << label << "  " << setw(3) << "LDA " << setw(4) << "TRUE" << "     " << endl;
+	if (!exists("TRUE"))
+	{
+		Insert("TRUE", BOOLEAN, CONSTANT, "1", YES, 1);
+	}
+	////objectFile << setw(4) << "" << "  " << setw(3) << "UNJ " << setw(4) << label << "+1" << "   " << setw(20) << "" << endl;
+	////objectFile << setw(4) << "" << "  " << setw(3) << "LDA " << setw(4) << "FALS" << "  " << "   " << setw(20) << "" << endl;
+	////if (!exists("FALS"))
+	////{
+	////	Insert("false", BOOLEAN, CONSTANT, "0", YES, 1);
+	////}
+	if (operand1[0] == 'T' && operand1 != "TRUE")
+	{
+		FreeTemp();
+	}
+	if (operand2[0] == 'T' && operand2 != "TRUE")
+	{
+		FreeTemp();
+	}
+	contentsOfA = GetTemp();
+	int index = getIndex(contentsOfA);
+	symbolTable[index].dataType = BOOLEAN;
+	PushOperand(contentsOfA);
+}
+
+//--------EmitLessThanCode()-----------------
+void EmitLessThanCode(string operand1, string operand2)
+{
+	int index1 = getIndex(operand1);
+	int index2 = getIndex(operand2);
+	
+	if (symbolTable[index1].dataType != INTEGER || symbolTable[index2].dataType != INTEGER)
+	{
+		throw(48);/*process error: illegal type*/
+	}
+	if (contentsOfA[0] == 'T' && contentsOfA != "TRUE" && contentsOfA != operand1 && contentsOfA != operand2)
+	{
+		//objectFile << "STA " << contentsOfA << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "STA " << setw(4) << contentsOfA << "  " << "   " << "deassign AReg" << endl;
+		int index = getIndex(contentsOfA);
+		symbolTable[index].alloc = YES;
+		contentsOfA = "";
+	}
+	if (contentsOfA[0] != 'T' && contentsOfA != operand1 && contentsOfA != operand2)
+	{
+		contentsOfA = "";
+	}
+	if (contentsOfA != operand2)
+	{
+		//objectFile << "LDA " << operand2 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "LDA " << setw(4) << operand2 << "     " << endl;
+		contentsOfA = operand2;
+	}
+	//objectFile << "ISB " << operand1 << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "ISB " << setw(4) << operand1 << "  " << "   " << symbolTable[index2].externalName <<  " < " << symbolTable[index1].externalName << endl;
+	string label = getLabel();
+	//objectFile << "AMJ " << label << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "AMJ " << setw(4) << label << "     " << endl;
+	//objectFile << "LDA TRUE" << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "LDA " << setw(4) << "FALS" << "     " << endl;
+	if (!exists("FALS"))
+	{
+		Insert("FALSE", BOOLEAN, CONSTANT, "0", YES, 1);
+	}
+	//objectFile << "UNJ " << label << "+1" << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "UNJ " << setw(4) << label << "+1" << "   " << endl;
+	//objectFile << label << " LDA FALS" << endl;
+	objectFile << setw(4) << label << "  " << setw(3) << "LDA " << setw(4) << "TRUE" << "     " << endl;
+	if (!exists("TRUE"))
+	{
+		Insert("TRUE", BOOLEAN, CONSTANT, "1", YES, 1);
+	}
+	if (operand1[0] == 'T' && operand1 != "TRUE")
+	{
+		FreeTemp();
+	}
+	if (operand2[0] == 'T' && operand2 != "TRUE")
+	{
+		FreeTemp();
+	}
+	contentsOfA = GetTemp();
+	int index = getIndex(contentsOfA);
+	symbolTable[index].dataType = BOOLEAN;
+	PushOperand(contentsOfA);
+}
+
+//--------EmitGreaterThanCode()-----------------
+void EmitGreaterThanCode(string operand1, string operand2)
+{
+	int index1 = getIndex(operand1);
+	int index2 = getIndex(operand2);
+	
+	if (symbolTable[index1].dataType != INTEGER || symbolTable[index2].dataType != INTEGER)
+	{
+		throw(48);/*process error: illegal type*/
+	}
+	if (contentsOfA[0] == 'T' && contentsOfA != "TRUE" && contentsOfA != operand1 && contentsOfA != operand2)
+	{
+		//objectFile << "STA " << contentsOfA << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "STA " << setw(4) << contentsOfA << "  " << "   " << "deassign AReg" << endl;
+		int index = getIndex(contentsOfA);
+		symbolTable[index].alloc = YES;
+		contentsOfA = "";
+	}
+	if (contentsOfA[0] != 'T' && contentsOfA != operand1 && contentsOfA != operand2)
+	{
+		contentsOfA = "";
+	}
+	if (contentsOfA != operand2)
+	{
+		//objectFile << "LDA " << operand1 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "LDA " << setw(4) << operand2 << "     " << endl;
+		contentsOfA = operand1;
+	}
+	//objectFile << "ISB " << operand2 << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "ISB " << setw(4) << operand1 << "  " << "   " << symbolTable[index2].externalName <<  " > " << symbolTable[index1].externalName << endl;
+	string label = getLabel();
+	//objectFile << "AMJ " << label << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "AMJ " << setw(4) << label << "     " << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "AZJ " << setw(4) << label << "     " << endl;
+	//objectFile << "LDA TRUE" << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "LDA " << setw(4) << "TRUE" << "     " << endl;
+	if (!exists("TRUE"))
+	{
+		Insert("TRUE", BOOLEAN, CONSTANT, "1", YES, 1);
+	}
+	//objectFile << "UNJ " << label << "+1" << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "UNJ " << setw(4) << label << "+1" << "   " << endl;
+	//objectFile << label << " LDA FALS" << endl;
+	objectFile << setw(4) << label << "  " << setw(3) << "LDA " << setw(4) << "FALS" << "     " << endl;
+	if (!exists("FALS"))
+	{
+		Insert("FALSE", BOOLEAN, CONSTANT, "0", YES, 1);
+	}
+	if (operand1[0] == 'T' && operand1 != "TRUE")
+	{
+		FreeTemp();
+	}
+	if (operand2[0] == 'T' && operand2 != "TRUE")
+	{
+		FreeTemp();
+	}
+	contentsOfA = GetTemp();
+	int index = getIndex(contentsOfA);
+	symbolTable[index].dataType = BOOLEAN;
+	PushOperand(contentsOfA);
+}
+
+//--------EmitGreaterThanEqualCode()-----------------
+void EmitGreaterThanEqualCode(string operand1, string operand2)
+{
+	int index1 = getIndex(operand1);
+	int index2 = getIndex(operand2);
+	
+	if (symbolTable[index1].dataType != INTEGER || symbolTable[index2].dataType != INTEGER)
+	{
+		throw(48);/*process error: illegal type*/
+	}
+	if (contentsOfA[0] == 'T' && contentsOfA != "TRUE" && contentsOfA != operand1 && contentsOfA != operand2)
+	{
+		//objectFile << "STA " << contentsOfA << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "STA " << setw(4) << contentsOfA << "  " << "   " << "deassign AReg" << endl;
+		int index = getIndex(contentsOfA);
+		symbolTable[index].alloc = YES;
+		contentsOfA = "";
+	}
+	if (contentsOfA[0] != 'T' && contentsOfA != operand1 && contentsOfA != operand2)
+	{
+		contentsOfA = "";
+	}
+	if (contentsOfA != operand2)
+	{
+		//objectFile << "LDA " << operand2 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "LDA " << setw(4) << operand2 << "     " << endl;
+	}
+	//objectFile << "ISB " << operand1 << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "ISB " << setw(4) << operand1 << "  " << "   " << symbolTable[index2].externalName <<  " >= " << symbolTable[index1].externalName << endl;
+	string label = getLabel();
+	//objectFile << "AMJ " << label << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "AMJ " << setw(4) << label << "     " << endl;
+	//objectFile << "LDA TRUE" << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "LDA " << setw(4) << "TRUE" << "     " << endl;
+	if (!exists("TRUE"))
+	{
+		Insert("TRUE", BOOLEAN, CONSTANT, "1", YES, 1);
+	}
+	//objectFile << "UNJ " << label << "+1" << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "UNJ " << setw(4) << label << "+1" << "   " << endl;
+	//objectFile << label << " LDA FALS" << endl;
+	objectFile << setw(4) << label << "  " << setw(3) << "LDA " << setw(4) << "FALS" << "     " << endl;
+	if (!exists("FALS"))
+	{
+		Insert("FALSE", BOOLEAN, CONSTANT, "0", YES, 1);
+	}
+	if (operand1[0] == 'T' && operand1 != "TRUE")
+	{
+		FreeTemp();
+	}
+	if (operand2[0] == 'T' && operand2 != "TRUE")
+	{
+		FreeTemp();
+	}
+	contentsOfA = GetTemp();
+	int index = getIndex(contentsOfA);
+	symbolTable[index].dataType = BOOLEAN;
+	PushOperand(contentsOfA);
+}
+
+//--------EmitLessThanEqualCode()-----------------
+void EmitLessThanEqualCode(string operand1, string operand2)
+{
+	int index1 = getIndex(operand1);
+	int index2 = getIndex(operand2);
+	
+	if (symbolTable[index1].dataType != INTEGER || symbolTable[index2].dataType != INTEGER)
+	{
+		throw(48);/*process error: illegal type*/
+	}
+	if (contentsOfA[0] == 'T' && contentsOfA != "TRUE" && contentsOfA != operand1 && contentsOfA != operand2)
+	{
+		//objectFile << "STA " << contentsOfA << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "STA " << setw(4) << left << contentsOfA << "  " << "   " << "deassign AReg" << endl;
+		int index = getIndex(contentsOfA);
+		symbolTable[index].alloc = YES;
+		contentsOfA = "";
+	}
+	if (contentsOfA[0] != 'T' && contentsOfA != operand1 && contentsOfA != operand2)
+	{
+		contentsOfA = "";
+	}
+	if (contentsOfA != operand2)
+	{
+		//objectFile << "LDA " << operand1 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "LDA " << setw(4) << left << operand2 << "     " << endl;
+
+		contentsOfA = operand1;
+	}
+	//objectFile << "ISB " << operand2 << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "ISB " << setw(4) << left << operand1 << "  " << "   " << symbolTable[index2].externalName <<  " <= " << symbolTable[index1].externalName << endl;
+	string label = getLabel();
+	//objectFile << "AMJ " << label << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "AMJ " << setw(4) << left << label << "     " << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "AZJ " << setw(4) << left << label << "     " << endl;
+	//objectFile << "LDA FALS" << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "LDA " << setw(4) << left << "FALS" << "     " << endl;
+	if (!exists("FALS"))
+	{
+		Insert("FALSE", BOOLEAN, CONSTANT, "0", YES, 1);
+	}
+	//objectFile << "UNJ " << label << "+1" << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "UNJ " << setw(4) << left << label << "+1" << "   " << endl;
+	//objectFile << label << " LDA TRUE" << endl;
+	objectFile << setw(4) << label << "  " << setw(3) << "LDA " << setw(4) << left << "TRUE" << "     " << endl;
+	if (!exists("TRUE"))
+	{
+		Insert("TRUE", BOOLEAN, CONSTANT, "1", YES, 1);
+	}
+	if (operand1[0] == 'T' && operand1 != "TRUE")
+	{
+		FreeTemp();
+	}
+	if (operand2[0] == 'T' && operand2 != "TRUE")
+	{
+		FreeTemp();
+	}
+	contentsOfA = GetTemp();
+	int index = getIndex(contentsOfA);
+	symbolTable[index].dataType = BOOLEAN;
+	PushOperand(contentsOfA);
+}	
+
+//---------EmitNotCode()-------------
+void EmitNotCode(string operand1)
+{
+	int index1 = getIndex(operand1);
+	if (symbolTable[index1].dataType != BOOLEAN)
+	{
+		throw(49);/*process error: illegal type*/
+	}
+	if (contentsOfA[0] == 'T' && contentsOfA != "TRUE" && contentsOfA != operand1)
+	{
+		//objectFile << "STA " << contentsOfA << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "STA " << setw(4) << left << contentsOfA << "  " << "   " << "deassign AReg" << endl;
+		int index = getIndex(contentsOfA);
+		symbolTable[index].alloc = YES;
+		contentsOfA = "";
+	}
+	if (contentsOfA[0] != 'T' && contentsOfA != operand1)
+	{
+		contentsOfA = "";
+	}
+	if (contentsOfA != operand1)
+	{
+		//objectFile << "LDA " << operand1 << endl;
+		objectFile << setw(4) << "" << "  " << setw(3) << "LDA " << setw(4) << left << operand1 << "     " << endl;
+		contentsOfA = operand1;
+	}
+	//objectFile << "ISB " << operand2 << endl;
+	string label = getLabel();
+	objectFile << setw(4) << "" << "  " << setw(3) << "AZJ " << setw(4) << left << label << "  " << "   " <<  "not " << symbolTable[index1].externalName << endl;
+	//objectFile << "AMJ " << label << endl;
+	objectFile << setw(4) << "" << "  " << setw(3) << "LDA " << setw(4) << left << "FALS" << "     " << endl;
+	if (!exists("FALS"))
+	{
+		Insert("FALSE", BOOLEAN, CONSTANT, "0", YES, 1);
+	}
+	objectFile << setw(4) << "" << "  " << setw(3) << "UNJ " << setw(4) << left << label << "+1   " << endl;
+	//objectFile << label << " LDA TRUE" << endl;
+	objectFile << setw(4) << label << "  " << setw(3) << "LDA " << setw(4) << left << "TRUE" << "     " << endl;
+	if (!exists("TRUE"))
+	{
+		Insert("TRUE", BOOLEAN, CONSTANT, "1", YES, 1);
+	}
+	if (operand1[0] == 'T' && operand1 != "TRUE" && operand1 != "TRUE")
+	{
+		FreeTemp();
+	}
+	contentsOfA = GetTemp();
+	int index = getIndex(contentsOfA);
+	symbolTable[index].dataType = BOOLEAN;
+	PushOperand(contentsOfA);
+}
+	
+//---------EmitReadCode()-------------	
+void EmitReadCode(string operand)
+{
+	int index = getIndex(operand);
+	objectFile << setw(4) << "" << "  " << setw(3) << "RDI " << setw(4) << left << operand << "  " << "   " << "read(" << symbolTable[index].externalName<< ")" << endl;
+}
+
+//---------EmitWriteCode()-------------	
+void EmitWriteCode(string operand)
+{
+	int index = getIndex(operand);
+	objectFile << setw(4) << "" << "  " << setw(3) << "PRI " << setw(4) << left << operand << "  " << "   " << "write(" << symbolTable[index].externalName<< ")" << endl;
+}
+
+//-----------EmitEndCode()---------------
+void EmitEndCode()
+{
+	objectFile << setw(4) << "" << "  " << setw(3) << "HLT " << setw(4) << left << "" << "  " << "   " << endl;
+}
+//-----------EmitEndCode()---------------
+void EmitBeginCode()
+{
+	int index;
+	for (uint i = 0; i < symbolTable.size(); i++)
+	{
+		if (symbolTable[i].dataType == PROG_NAME)
+		{
+			index = i;
+			break;
+		}
+	}
+	objectFile << setw(4) << "STRT" << "  " << setw(3) << "NOP " << setw(4) << left << "" << "  " << "   "  << symbolTable[index].externalName << " - Jonathan G. & Lucas L." << endl;
+}
+
+//----------EmitThenCode()----------------
+void EmitThenCode(string operand1)
+{
+	string tempLabel = getLabel();
+	
+	if (contentsOfA != operand1)
+	{
+		objectFile << setw(4) << " " << "  " << setw(3) << "LDA " << setw(4) << left << operand1 << "     " << endl;
+	}
+	
+	objectFile << setw(4) << " " << "  " << setw(3) << "AZJ "  << setw(4) << left << tempLabel << "     " << "if false jump to " << tempLabel << endl;
+	PushOperand(tempLabel);
+	
+	if (operand1[0] == 'T' && operand1 != "TRUE")
+	{
+		FreeTemp();
+	}
+	
+	contentsOfA = "";
+}
+
+//----------EmitElseCode()----------------
+void EmitElseCode(string operand1)
+{
+	string tempLabel = getLabel();
+	
+	objectFile << setw(4) << " " << "  " << setw(3) << "UNJ "  << setw(4) << left << tempLabel << "     " << "jump to end if" << endl;
+	objectFile << setw(4) << operand1 << "  " << setw(3) << "NOP "  << setw(4) << left << " " << "     " << "else" << endl;
+	PushOperand(tempLabel);
+	
+	contentsOfA = "";
+}
+
+//----------EmitPostIfCode()----------------
+void EmitPostIfCode(string operand1)
+{
+	objectFile << setw(4) << operand1 << "  " << setw(3) << "NOP "  << setw(4) << left << " " << "     " << "end if" << endl;
+	
+	contentsOfA = "";
+}
+
+//----------EmitWhileCode()----------------
+void EmitWhileCode()
+{
+	string tempLabel = getLabel();
+	objectFile << setw(4) << tempLabel << "  " << setw(3) << "NOP "  << setw(4) << left << " " << "     " << "while" << endl;
+	PushOperand(tempLabel);
+	contentsOfA = "";
+}
+
+//----------EmitDoCode()----------------
+void EmitDoCode(string operand1)
+{
+	string tempLabel = getLabel();
+	
+	if (contentsOfA != operand1)
+	{
+		objectFile << setw(4) << " " << "  " << setw(3) << "LDA " << setw(4) << left << operand1 << "     " << endl;
+	}
+	
+	objectFile << setw(4) << " " << "  " << setw(3) << "AZJ "  << setw(4) << left << tempLabel << "     " << "do" << endl;
+	PushOperand(tempLabel);
+	
+	if (operand1[0] == 'T' && operand1 != "TRUE")
+	{
+		FreeTemp();
+	}
+	
+	contentsOfA = "";
+}
+
+//----------EmitPostWhileCode()----------------
+void EmitPostWhileCode(string operand1, string operand2)
+{
+	objectFile << setw(4) << " " << "  " << setw(3) << "UNJ "  << setw(4) << left << operand2 << "     " << "end while" << endl;
+	objectFile << setw(4) << operand1 << "  " << setw(3) << "NOP "  << setw(4) << left << " " << "     " << endl;
+	contentsOfA = "";
+}
+
+//----------EmitRepeatCode()----------------
+void EmitRepeatCode()
+{
+	string tempLabel = getLabel();
+	objectFile << setw(4) << tempLabel << "  " << setw(3) << "NOP "  << setw(4) << left << " " << "     " << "repeat" << endl;
+	PushOperand(tempLabel);
+	contentsOfA = "";
+}
+
+//----------EmitUntilCode()----------------
+void EmitUntilCode(string operand1, string operand2)
+{
+	if (contentsOfA != operand1)
+	{
+		objectFile << setw(4) << " " << "  " << setw(3) << "LDA " << setw(4) << left << " " << "     " << endl;
+	}
+	
+	objectFile << setw(4) << " " << "  " << setw(3) << "AZJ " << setw(4) << left << operand2 << "     " << "until" << endl;
+	
+	if (operand1[0] == 'T' && operand1 != "TRUE")
+	{
+		FreeTemp();
+	}
+	contentsOfA = "";
+}
+
+//-------Code()----------------------
+void Code(string op, string operand1, string operand2)
+{
+	if (op == "+")
+	{
+		EmitAdditionCode(operand1, operand2);
+	}
+		else if (op == "-")
+	{
+		EmitSubtractionCode(operand1, operand2);
+	}
+	else if (op == "*")
+	{
+		EmitMultiplicationCode(operand1, operand2);
+	}
+	else if (op == "div")
+	{
+		EmitDivisionCode(operand1, operand2);
+	}
+	else if (op == "mod")
+	{
+		EmitModCode(operand1, operand2);
+	}
+	else if (op == "and")
+	{
+		EmitAndCode(operand1, operand2);
+	}
+	else if (op == "or")
+	{
+		EmitOrCode(operand1, operand2);
+	}
+	else if (op == "not")
+	{
+		EmitNotCode(operand1);
+	}
+	else if (op == "<")
+	{
+		EmitLessThanCode(operand1, operand2);
+	}
+	else if (op == ">")
+	{
+		EmitGreaterThanCode(operand1, operand2);
+	}
+	else if (op == "=")
+	{
+		EmitEqualsCode(operand1, operand2);
+	}
+	else if (op == "<=")
+	{
+		EmitLessThanEqualCode(operand1, operand2);
+	}
+	else if (op == ">=")
+	{
+		EmitGreaterThanEqualCode(operand1, operand2);
+	}
+	else if (op == "<>")
+	{
+		EmitNotEqualsCode(operand1, operand2);
+	}
+	else if (op == ":=")
+	{
+		EmitAssignCode(operand1, operand2);
+	}
+	else if(op == "then")
+    {
+        EmitThenCode(operand1);
+    }
+    else if(op == "else")
+    {
+        EmitElseCode(operand1);
+    }
+    else if(op == "post_if")
+    {
+        EmitPostIfCode(operand1);
+    }
+    else if(op == "while")
+    {
+        EmitWhileCode();
+    }
+    else if(op == "do")
+    {
+        EmitDoCode(operand1);
+    }
+    else if(op == "post_while")
+    {
+        EmitPostWhileCode(operand1,operand2);
+    }
+    else if(op == "repeat")
+    {
+        EmitRepeatCode();
+    }
+    else if(op == "until")
+    {
+        EmitUntilCode(operand1,operand2);
+    }
+	else if (op == "write")
+	{
+		EmitWriteCode(operand1);
+	}
+	else if (op == "read")
+	{
+		EmitReadCode(operand1);
+	}
+	else if (op == "end")
+	{
+		EmitEndCode();
+	}
+	else if (op == "begin")
+	{
+		EmitBeginCode();
+	}
+}
+
+
+//-------NextToken()-----------------
+
+string NextToken() //returns the next token or end of file marker
+{
+ token = "";
+ while (token == "")
+ {
+		if (charac == '{') //process comment
+		{
+			isComment = true;
+			while (charac != END_OF_FILE && charac != '}')  
+			{
+				NextChar();
+			}
+			if (charac == END_OF_FILE)
+			{
+				throw(25); // unexpected end of file
+			}
+			else
+			{
+				NextChar();
+			}
+			isComment = false;
+		}
+		else if (charac == '}') 
+		{
+			throw(26); // "}" cannot begin token
+		}
+		else if (isspace(charac))  //Eats Spaces
+		{
+			NextChar();
+		}
+		else if(charac == '*' || charac == '(' || charac == ')' || charac == '<' || charac == '>' ||
+		charac == ':' || charac == ',' || charac == ';' || charac == '=' || charac == '+' || charac == '-' || charac == '.') //Special Character Case
+		{
+			token = charac;
+			//Need to add something that peeks at the next character when the current character is ":", '<', or '>'
+			char peek = sourceFile.peek();
+			if (charac == ':' && peek == '=')
+			{
+				token += NextChar();
+			}
+			else if (charac == '<' && (peek == '=' || peek == '>' ))
+			{
+				token += NextChar();
+			}
+			else if (charac == '>' && peek == '=')
+			{
+				token += NextChar();
+			}
+			NextChar();
+		}
+		else if (islower(charac)) 
+		{
+			token = charac;
+			NextChar();
+			while (islower(charac) || isdigit(charac) || charac == '_')
+			{
+				if (charac == '_')
+				{
+					if (token.back() == '_' && isComment == false ) 
+					{
+						throw(27); // token cannot contain more than 1 consecutive "_"
+					}
+				}
+				token+=charac;
+				NextChar();
+			}
+			if (token[token.length()-1] == '_')
+			{
+				throw(28); // "_" cannot end token
+			}
+		}
+		else if(isdigit(charac))
+		{
+			token = charac;
+			NextChar();
+			while (isdigit(charac)) 
+			{
+				token+=charac;
+				NextChar();
+			}
+		}
+		else if (charac == END_OF_FILE)
+		{
+			token = END_OF_FILE;
+		}
+		else
+		{
+			throw(29); // illegal token
+		}
+	}
+ return token;
+}
+
+//-------NextChar()-----------------
+
+char NextChar() //returns the next character or end of file marker
+{
+	
+	sourceFile.get(charac);
+	static char prevCh;
+	
+	if (sourceFile.eof())
+	{
+		charac = END_OF_FILE; //use a special character to designate end of file
+		return charac;	
+	}
+	else
+	{
+		if (isBegining)
+		{
+			listingFile << setw(5) << right << lineNum << '|';
+			isBegining = false;
+		}
+		if (charac == '\n' && prevCh != '\n') 
+		{
+			prevCh = charac;
+		}
+		else if (charac == '\n' && prevCh == '\n') 
+		{
+			prevCh = charac;
+			lineNum += 1;
+			listingFile << charac << setw(5) << lineNum << "|";
+			
+		}
+		else if (charac != '\n' && prevCh == '\n')
+		{
+			listingFile << prevCh;
+			prevCh = charac;
+			lineNum += 1;
+			listingFile << setw(5) << right << lineNum << "|" << prevCh ;			
+		}
+		else
+		{
+			listingFile << charac;
+		}
+	}
+	
+	return charac;
+}
+
+bool isInteger(string x)
+{
+	if ((x[0] == '+' || x[0] == '-') && x.length() > 1)
+	{
+		x.erase(0);
+	}
+	for (uint i = 0; i < x.length(); ++i)
+	{
+		if (!isdigit(x[i]))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+string GenInternalName(storeType x)
+{
+	string temp = "";
+	
+	if (x == INTEGER)
+	{
+		temp = "I";
+		temp += to_string(integerCount);
+		integerCount += 1;
+	}
+	else if (x == BOOLEAN)
+	{
+		temp = "B";
+		temp += to_string(booleanCount);
+		booleanCount += 1;
+	}
+	else
+	{
+		temp = "P";
+		temp += to_string(programCount);
+		programCount += 1;
+	}
+	
+	return temp;
+}
+
+bool isNonKeyID(string x)
+{
+	return !(x == ":=" || x == "*" || x == "(" || x == ")" || x == "<>" || x == "<" || x == "<=" || x == ">=" 
+	|| x == ">" || x == "read" || x == "write" || x == "mod" || x == "and" || x == "or" || x == ":" || x == "," 
+	|| x == ";" || x == "=" || x == "+" || x == "-" || x == "." || x == "program" || x == "const" || x == "var" 
+	|| x == "integer" || x == "boolean" || x == "begin" || x == "end" || x == "true" || x == "false" || x == "not" 
+	|| isInteger(x) || x == "if" || x == "then" || x == "while" || x == "repeat" || x == "else" || x == "until"
+	|| x == "do");
+}
+
+string printType(int i)
+{
+	if (symbolTable[i].dataType == BOOLEAN)
+	{
+		return "BOOLEAN";
+	}
+	else if (symbolTable[i].dataType == INTEGER)
+	{
+		return "INTEGER";
+	}
+	else if (symbolTable[i].dataType == PROG_NAME)
+	{
+		return "PROG_NAME";
+	}
+	return "THIS SHOULDNT HAPPEN";
+}
+
+string printMode(int i)
+{
+	if (symbolTable[i].mode == CONSTANT)
+	{
+		return "CONSTANT";
+	}
+	else if (symbolTable[i].mode == VARIABLE)
+	{
+		return "VARIABLE";
+	}
+	return "THIS SHOULDNT HAPPEN";
+}
+
+string printAlloc(int i)
+{
+	if (symbolTable[i].alloc == YES)
+	{
+		return "YES";
+	}
+	else if (symbolTable[i].alloc == NO)
+	{
+		return "NO";
+	}
+	return "THIS SHOULDNT HAPPEN";
+}
+
+int getIndex(string name)
+{
+	int count = 0;
+	for (uint i = 0; i < symbolTable.size(); i++)
+	{
+		if (symbolTable[i].externalName == name || symbolTable[i].internalName == name)
+		{
+			return count;
+		}
+		count++;
+	}
+	return -1;
+}
+
+bool exists(string name)
+{
+	bool temp = false;
+	for (uint i = 0; i < symbolTable.size(); i++)
+	{
+		if (symbolTable[i].externalName == name || symbolTable[i].internalName == name)
+		{
+			temp = true;
+			break;
+		}
+	}
+	return temp;
+}
+
+string getLabel()
+{
+	string label = "L";
+	labelCount++;
+	label += to_string(labelCount);
+	return label;
+}
