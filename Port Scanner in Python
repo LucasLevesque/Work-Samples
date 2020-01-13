@@ -1,0 +1,24 @@
+#Lucas Levesque
+#Port Scanner in Python
+
+import socket
+socket.setdefaulttimeout(2)
+
+def main():
+	portnum = open("portcheck", 'r')
+	for ip in range(40, 55): #my host machine was .54 and my ubuntu machine was .42, you may need to change these numbers if your ip is out of this range
+		print "10.2.43."+str(ip) + "\n-------------"
+		portnum = open("portcheck", 'r')
+		for i in portnum:
+			retBanner("10.2.43."+str(ip), i.strip('\n'))
+
+def retBanner(ip, portnum):
+	try:
+		s = socket.socket()
+		s.connect((ip, int(portnum)))
+		print portnum + ": [+] Connection Sucessful: " + s.recv(1024).strip('\n')
+		
+	except Exception as e:
+		print portnum + ": [-] Connection Refused: " + str(e)
+
+main()
